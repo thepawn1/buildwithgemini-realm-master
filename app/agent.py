@@ -22,6 +22,7 @@ from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.apps import App
 from google.adk.models import Gemini
+from google.adk.tools import ToolContext
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool
 from google.genai import types
 
@@ -273,6 +274,32 @@ def generate_scene_art(prompt: str, subject_type: str = "scene") -> str:
     return generate_and_upload_scene_art(prompt=prompt, subject_type=subject_type)
 
 
+def generate_item_video(
+    item_name: str,
+    visual_description: str,
+    tool_context: ToolContext,
+) -> str:
+    """Generates a short showcase video for a fantasy RPG item using Google's Omni model (gemini-omni-flash-preview).
+
+    Saves the video artifact in the session artifact registry and uploads the video bytes to the public Cloud Storage bucket.
+
+    Args:
+        item_name: Name of the magical item, relic, weapon, or armor (e.g. 'Sunshard Amulet', 'Moonblade', 'Dragon Scale Mail').
+        visual_description: Detailed visual description of the item, magical particles, lighting, and movement.
+        tool_context: Tool execution context injected by ADK.
+
+    Returns:
+        The public HTTPS URL of the video hosted on Cloud Storage (https://storage.googleapis.com/<bucket>/<object>).
+    """
+    from app.video_generator import generate_item_video as _gen_video
+
+    return _gen_video(
+        item_name=item_name,
+        visual_description=visual_description,
+        tool_context=tool_context,
+    )
+
+
 def generate_encounter_loot(
     challenge_rating: float,
     enemy_name: str = "",
@@ -368,6 +395,7 @@ root_agent = Agent(
         lookup_5e_srd,
         consult_dungeon_masters_guide,
         generate_scene_art,
+        generate_item_video,
         generate_encounter_loot,
         search_item_catalog,
         get_item_details,
