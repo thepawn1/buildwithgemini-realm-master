@@ -121,16 +121,37 @@ def _extract_parts(parts: list) -> list[dict]:
     surfaceUpdate).
     """
     out: list[dict] = []
+    import json
     for p in parts:
         root = getattr(p, "root", p)
-        if isinstance(root, TextPart) and getattr(root, "text", None):
+        if hasattr(root, "text") and getattr(root, "text", None) is not None:
             out.append({"kind": "text", "text": root.text})
         elif getattr(root, "data", None) is not None:
-            meta = getattr(root, "metadata", None) or {}
-            mime = meta.get("mimeType") if isinstance(meta, dict) else None
-            if mime == _A2UI_MIME:
-                out.append({"kind": "a2ui", "data": root.data})
-        elif isinstance(root, FilePart):
+            if isinstance(root.data, dict):
+                # The Reasoning Engine unwraps <a2a_datapart_json> but leaves the inner JSON 
+                # as the .data dict, so metadata might be inside root.data!
+                inner_meta = root.data.get("metadata") or getattr(root, "metadata", None) or {}
+                mime = inner_meta.get("mimeType") if isinstance(inner_meta, dict) else None
+                if mime == _A2UI_MIME:
+                    actual_data = root.data.get("data") if "data" in root.data else root.data
+                    out.append({"kind": "a2ui", "data": actual_data})
+                else:
+                    # Fallback check
+                    meta = getattr(root, "metadata", None) or {}
+                    mime = meta.get("mimeType") if isinstance(meta, dict) else getattr(root, "mime_type", None)
+                    if isinstance(meta, dict) and meta.get("mimeType") == _A2UI_MIME:
+                        out.append({"kind": "a2ui", "data": root.data})
+            elif isinstance(root.data, bytes):
+                try:
+                    text = root.data.decode("utf-8")
+                    if text.startswith("<a2a_datapart_json>") and text.endswith("</a2a_datapart_json>"):
+                        inner = text[len("<a2a_datapart_json>"):-len("</a2a_datapart_json>")]
+                        obj = json.loads(inner)
+                        if obj.get("metadata", {}).get("mimeType") == _A2UI_MIME:
+                            out.append({"kind": "a2ui", "data": obj.get("data")})
+                except Exception:
+                    pass
+        elif type(root).__name__ == "FilePart":
             uri = getattr(getattr(root, "file", None), "uri", None)
             if uri:
                 out.append({"kind": "text", "text": uri})
