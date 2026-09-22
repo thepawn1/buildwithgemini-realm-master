@@ -1,94 +1,45 @@
-# simple-agent
+# RealmMaster: DM Companion
 
-Simple ReAct agent
-Agent generated with `agents-cli` version `1.4.0`
+RealmMaster is an omniscient tabletop RPG companion, rule keeper, visual artificer, and campaign manager built using Google's Agent Development Kit (ADK).
 
-## Project Structure
+## Features
 
-```
-simple-agent/
-├── app/         # Core agent code
-│   ├── agent.py               # Main agent logic
-│   ├── fast_api_app.py        # FastAPI Backend server
-│   └── app_utils/             # App utilities and helpers
-├── tests/                     # Unit, integration, and load tests
-├── GEMINI.md                  # AI-assisted development guide
-└── pyproject.toml             # Project dependencies
-```
+- **Rich UI (A2UI)**: Natively renders character profiles, quests, dice rolls, and loot tables as interactive UI cards in the chat.
+- **Long-Term Memory**: Uses a Vertex AI Memory Bank to remember character profiles, active inventories, party members, and ongoing campaign quest notes across sessions.
+- **Rulebook Grounding (RAG)**: Grounded on the Dungeon Master's Guide via Vertex AI RAG Engine for accurate rule lookups.
+- **Code Execution Sandbox**: Securely runs Python code for complex dice math and tabletop simulations.
 
-> 💡 **Tip:** Use [Antigravity CLI](https://antigravity.google/) for AI-assisted development - project context is pre-configured in `GEMINI.md`.
+## Agent Tools
 
-## Requirements
+- **5e SRD Lookup**: Queries a REST compendium to fetch accurate stats and rules.
+- **Scene & Portrait Generation**: Takes a visual prompt, generates an illustration using Vertex AI Imagen 3, and uploads the image to a public Cloud Storage bucket.
+- **Dynamic Encounter Loot**: Queries a Firestore compendium to pick appropriate rarity rewards based on encounter Challenge Rating (CR) and drops loot directly into the active inventory.
 
-Before you begin, ensure you have:
-- **uv**: Python package manager (used for all dependency management in this project) - [Install](https://docs.astral.sh/uv/getting-started/installation/) ([add packages](https://docs.astral.sh/uv/concepts/dependencies/) with `uv add <package>`)
-- **agents-cli**: Agents CLI - Install with `uv tool install google-agents-cli`
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
+## Custom Frontend
 
+The project includes a custom FastAPI proxy and a themed chat UI built with HTML/JS/CSS.
+- **Fantasy Theming**: "Lord of the Rings" style aesthetic with parchment backgrounds, elven green accents, and ornate borders.
+- **Rich Text & Media**: Full Markdown support, animated 3D dice rolls, and fullscreen click-to-expand image modals for generated art.
+- **Quick Prompts**: One-click prompt buttons to easily roll dice, check inventory, or generate portraits.
 
-## Quick Start
+## How to Run Locally
 
-Install `agents-cli` and its skills if not already installed:
-
+### 1. Start the Agent
+Use the Antigravity CLI to run the agent locally:
 ```bash
-uvx google-agents-cli setup
+uv run adk web --port 8081
 ```
 
-Install required packages:
-
+### 2. Start the Frontend
+In a separate terminal, start the FastAPI proxy:
 ```bash
-agents-cli install
+cd frontend
+python -m venv .venv-frontend
+source .venv-frontend/bin/activate
+pip install -r requirements.txt
+export AGENT_ENGINE_RESOURCE_NAME="<your-agent-engine-resource-name>"
+export AGENT_DIRECTORY="app"
+export PORT=8080
+python main.py
 ```
-
-Test the agent with a local web server:
-
-```bash
-agents-cli playground
-```
-
-You can also use features from the [ADK](https://adk.dev/) CLI with `uv run adk`.
-
-## Commands
-
-| Command              | Description                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `agents-cli install` | Install dependencies using uv                                                         |
-| `agents-cli playground` | Launch local development environment                                                  |
-| `agents-cli lint`    | Run code quality checks                                                               |
-| `agents-cli eval`    | Evaluate agent behavior (generate, grade, analyze, and more — see `agents-cli eval --help`) |
-| `uv run pytest tests/unit tests/integration` | Run unit and integration tests                                                        |
-| `agents-cli deploy`  | Deploy agent to Agent Runtime                                                                |
-| `agents-cli publish gemini-enterprise` | Register deployed agent to Gemini Enterprise                    || [A2A Inspector](https://github.com/a2aproject/a2a-inspector) | Launch A2A Protocol Inspector                                                        |
-
-## 🛠️ Project Management
-
-| Command | What It Does |
-|---------|--------------|
-| `agents-cli scaffold enhance` | Add CI/CD pipelines and Terraform infrastructure |
-| `agents-cli infra cicd` | One-command setup of entire CI/CD pipeline + infrastructure |
-| `agents-cli scaffold upgrade` | Auto-upgrade to latest version while preserving customizations |
-
----
-
-## Development
-
-Edit your agent logic in `app/agent.py` and test with `agents-cli playground` - it auto-reloads on save.
-
-## Deployment
-
-```bash
-gcloud config set project <your-project-id>
-agents-cli deploy
-```
-
-To add CI/CD and Terraform, run `agents-cli scaffold enhance`.
-To set up your production infrastructure, run `agents-cli infra cicd`.
-
-## Observability
-
-Built-in telemetry exports to Cloud Trace, BigQuery, and Cloud Logging.
-
-## A2A Inspector
-
-This agent supports the [A2A Protocol](https://a2a-protocol.org/). Use the [A2A Inspector](https://github.com/a2aproject/a2a-inspector) to test interoperability.
-See the [A2A Inspector docs](https://github.com/a2aproject/a2a-inspector) for details.
+Then navigate to `http://localhost:8080` in your browser.
